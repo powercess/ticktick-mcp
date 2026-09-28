@@ -1,0 +1,97 @@
+name: Publish
+
+# Publishes @powercess/ticktick-mcp to npm with OIDC trusted publishing — no
+# NPM_TOKEN secret. On npmjs.com the trusted publisher must name this exact file
+# (`.github/workflows/publish.yml`) and allow direct publishing (`npm publish`).
+#
+# Triggered only by a published GitHub release or a manual dispatch, so a pull
+# request can never reach the publish job. The version guard makes a re-run
+# harmless: an already-published version is skipped, not re-pushed.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # `pretest` compiles with tsc, so this covers the build as well.
+      - name: Test
+        run: npm test
+
+  publish:
+    name: Publish to npm
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # The OIDC token npm exchanges for short-lived publish rights.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          # Writes an .npmrc pointed at the public registry. NODE_AUTH_TOKEN is
+          # deliberately left unset: with no token npm falls back to the OIDC
+          # identity, which also turns on provenance attestations.
+          registry-url: https://registry.npmjs.org
+          # Caching is discouraged for release builds — a poisoned cache would
+          # affect the artifact that gets published.
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check whether this version is already published
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          echo "package=${name}@${version}" >> "$GITHUB_OUTPUT"
+          if npm view "${name}@${version}" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::${name}@${version} is already on npm; nothing to do."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::${name}@${version} will be published."
+          fi
+
+      # `prepublishOnly` builds dist/ before packing.
+      - name: Publish
+        if: steps.version.outputs.published == 'false'
+        run: npm publish
+
+      - name: Report skipped version
+        if: steps.version.outputs.published == 'true'
+        run: echo "${{ steps.version.outputs.package }} is already published — bump the version to release a new one."
+
+      - name: Explain an authentication failure
+        if: failure()
+        run: |
+          echo "::error::If this was an authentication error, check the npm trusted publisher for this package:"
+          echo "::error::repository must be powercess/ticktick-mcp, workflow filename must be publish.yml,"
+          echo "::error::and it must allow direct publishing (npm publish), not stage publishing only."

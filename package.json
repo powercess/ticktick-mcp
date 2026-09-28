@@ -1,0 +1,58 @@
+{
+  "name": "@powercess/ticktick-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for TickTick (ticktick.com / dida365.com) built on the private web API — the same endpoints the web app calls, with cookie auth and full read/write task, project, tag, habit and calendar coverage.",
+  "type": "module",
+  "license": "MIT",
+  "author": "powercess",
+  "homepage": "https://github.com/powercess/ticktick-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powercess/ticktick-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/powercess/ticktick-mcp/issues"
+  },
+  "keywords": [
+    "ticktick",
+    "dida365",
+    "mcp",
+    "model-context-protocol",
+    "task-management",
+    "todo",
+    "reverse-engineering"
+  ],
+  "bin": {
+    "ticktick-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "scripts",
+    "src",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "pretest": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc -w",
+    "test": "node --test \"test/**/*.test.mjs\""
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

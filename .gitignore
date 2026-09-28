@@ -1,0 +1,16 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+
+# Credentials — never commit a live session cookie, CSRF token or API token.
+.env
+.env.*
+!.env.example
+.ticktick-mcp/
+*.cookie
+*.session
+captures/
+
+# Scratch scripts that may embed a local account id, project id or cookie.
+/scripts/tmp-*

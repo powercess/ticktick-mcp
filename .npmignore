@@ -1,0 +1,8 @@
+dist/
+*.log
+.env
+.env.*
+!.env.example
+.ticktick-mcp/
+*.cookie
+captures/
