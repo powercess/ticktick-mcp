@@ -7,7 +7,7 @@ import { guard } from "./helpers.js";
 export function registerProjectTools(server: McpServer) {
   server.registerTool(
     "list_projects",
-    { description: "Lists all projects (lists) for the signed-in user.", inputSchema: {} },
+    { description: "Lists all projects (lists) for the signed-in user. Works in both cookie and API-token mode.", inputSchema: {} },
     () => guard(() => api.listProjects()),
   );
 
@@ -18,6 +18,15 @@ export function registerProjectTools(server: McpServer) {
       inputSchema: { projectId: z.string().describe("Project id") },
     },
     ({ projectId }) => guard(() => api.getProject(projectId)),
+  );
+
+  server.registerTool(
+    "get_project_with_data",
+    {
+      description: "Gets a project with its tasks and columns.",
+      inputSchema: { projectId: z.string().describe("Project id") },
+    },
+    ({ projectId }) => guard(() => api.getProjectWithData(projectId)),
   );
 
   server.registerTool(
@@ -62,14 +71,14 @@ export function registerProjectTools(server: McpServer) {
 
   server.registerTool(
     "list_tags",
-    { description: "Lists all tags.", inputSchema: {} },
+    { description: "Lists all tags. Works in both modes.", inputSchema: {} },
     () => guard(() => api.listTags()),
   );
 
   server.registerTool(
     "rename_tag",
     {
-      description: "Renames a tag.",
+      description: "Renames a tag. Web mode only.",
       inputSchema: {
         name: z.string().describe("Current tag name"),
         newName: z.string().describe("New tag name"),
@@ -81,7 +90,7 @@ export function registerProjectTools(server: McpServer) {
   server.registerTool(
     "merge_tags",
     {
-      description: "Merges one tag into another.",
+      description: "Merges one tag into another. Web mode only.",
       inputSchema: {
         name: z.string().describe("Tag to merge from"),
         toName: z.string().describe("Tag to merge into"),
@@ -93,7 +102,7 @@ export function registerProjectTools(server: McpServer) {
   server.registerTool(
     "delete_tag",
     {
-      description: "Deletes a tag.",
+      description: "Deletes a tag. Web mode only.",
       inputSchema: { name: z.string().describe("Tag name") },
     },
     ({ name }) => guard(() => api.deleteTag(name)),
@@ -102,9 +111,9 @@ export function registerProjectTools(server: McpServer) {
   server.registerTool(
     "list_columns",
     {
-      description: "Lists kanban columns, optionally scoped to a project.",
-      inputSchema: { projectId: z.string().optional().describe("Project id; omit for all columns") },
+      description: "Lists kanban columns for a project (or all columns in web mode).",
+      inputSchema: { projectId: z.string().optional().describe("Project id; omit for all columns (web mode)") },
     },
-    ({ projectId }) => guard(() => (projectId ? api.listProjectColumns(projectId) : api.listColumns())),
+    ({ projectId }) => guard(() => api.listColumns(projectId)),
   );
 }

@@ -1,9 +1,17 @@
-import { API_HOSTS, requireAuth, type Auth, type Site } from "./config.js";
+import {
+  API_HOSTS,
+  requireAuth,
+  type Auth,
+  type AuthMode,
+  type Site,
+} from "./config.js";
 import { TickTickError, isNotFoundPage } from "./errors.js";
 
 export interface RequestOptions {
   /** Site to target; defaults to the resolved credentials' site. */
   site?: Site;
+  /** Overrides the auth mode for this call (`web` or `openapi`). */
+  mode?: AuthMode;
   method?: string;
   /** Query string parameters; `undefined` values are dropped. */
   query?: Record<string, string | number | boolean | undefined>;
@@ -22,6 +30,28 @@ function baseHeaders(): Record<string, string> {
   };
 }
 
+/** Headers for the private web surface: session cookie + CSRF on writes. */
+function webHeaders(auth: Auth): Record<string, string> {
+  const headers: Record<string, string> = {
+    ...baseHeaders(),
+    cookie: auth.cookie,
+    origin: new URL(API_HOSTS[auth.site]).origin,
+    referer: `${new URL(API_HOSTS[auth.site]).origin}/`,
+  };
+  if (auth.csrfToken) headers["x-csrftoken"] = auth.csrfToken;
+  if (auth.userId) headers["ap-user-id"] = auth.userId;
+  return headers;
+}
+
+/** Headers for the official Open API surface: Bearer token, no cookie. */
+function openApiHeaders(auth: Auth): Record<string, string> {
+  return { ...baseHeaders(), authorization: `Bearer ${auth.apiToken}` };
+}
+
+/**
+ * Resolves the endpoint for a call. Web-mode paths are passed through as-is
+ * (`/api/v2/…`); openapi-mode callers pass the `/open/v1/…` path they want.
+ */
 function buildUrl(site: Site, path: string, query?: RequestOptions["query"]): string {
   const url = new URL(path, API_HOSTS[site]);
   for (const [key, value] of Object.entries(query ?? {})) {
@@ -31,10 +61,13 @@ function buildUrl(site: Site, path: string, query?: RequestOptions["query"]): st
 }
 
 /**
- * Calls the private web API with the resolved session cookie.
+ * Calls TickTick with the resolved credential.
  *
- * Writes additionally send `x-csrftoken`, which the server requires; without it
- * the API answers 403. A non-2xx response throws a {@link TickTickError}.
+ * - **web mode** — private API (`/api/v2`, `/api/v3`); session cookie, writes
+ *   additionally send `x-csrftoken`.
+ * - **openapi mode** — official `/open/v1`; `Authorization: Bearer <token>`.
+ *
+ * A non-2xx response throws a {@link TickTickError}.
  */
 export async function request<T = unknown>(
   path: string,
@@ -42,14 +75,10 @@ export async function request<T = unknown>(
 ): Promise<T> {
   const auth = requireAuth(options.auth);
   const site = options.site ?? auth.site;
-  const headers: Record<string, string> = {
-    ...baseHeaders(),
-    cookie: auth.cookie,
-    origin: new URL(API_HOSTS[site]).origin,
-    referer: `${new URL(API_HOSTS[site]).origin}/`,
-  };
-  if (auth.csrfToken) headers["x-csrftoken"] = auth.csrfToken;
-  if (auth.userId) headers["ap-user-id"] = auth.userId;
+  const mode = options.mode ?? auth.mode;
+
+  const headers =
+    mode === "openapi" ? openApiHeaders(auth) : webHeaders(auth);
 
   const response = await fetch(buildUrl(site, path, options.query), {
     method: options.method ?? "GET",

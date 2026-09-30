@@ -1,6 +1,6 @@
 {
   "name": "@powercess/ticktick-mcp",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "MCP server for TickTick (ticktick.com / dida365.com) built on the private web API — the same endpoints the web app calls, with cookie auth and full read/write task, project, tag, habit and calendar coverage.",
   "type": "module",
   "license": "MIT",
@@ -39,10 +39,11 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "pretest": "tsc",
+    "pretest": "bun run build",
     "start": "node dist/index.js",
+    "start:bun": "bun src/index.ts",
     "dev": "tsc -w",
-    "test": "node --test \"test/**/*.test.mjs\""
+    "test": "bun test"
   },
   "engines": {
     "node": ">=20"
@@ -52,6 +53,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@types/bun": "latest",
     "@types/node": "^22.0.0",
     "typescript": "^5.6.0"
   }

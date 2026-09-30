@@ -83,25 +83,61 @@ Configure as an MCP server:
 
 ## Authentication
 
-The private API authenticates with the web session cookie. Grab it once from a
-logged-in browser — DevTools → Network → any `api.ticktick.com` request →
-Request Headers → `cookie` — and pass the whole value. See
-[docs/authentication.md](docs/authentication.md) for the full walkthrough and
-every supported input.
+Two credential types, auto-detected from shape — no mode flag needed:
+
+| Credential | Env var | API surface | Tools |
+|---|---|---|---|
+| **Web session cookie** | `TICKTICK_COOKIE` | private `/api/v2` + `/api/v3` | **all 36** |
+| **Personal API token** (`tp_…`) | `TICKTICK_API_TOKEN` | official `/open/v1` | ~28 (stable subset) |
 
 Precedence: tool argument → environment → `~/.ticktick-mcp/credentials.json`.
 
-| Variable | Meaning |
-|---|---|
-| `TICKTICK_COOKIE` | Full `Cookie:` header (simplest) |
-| `TICKTICK_TOKEN` | Just the `t=` value (combine with the two below) |
-| `TICKTICK_CSRF_TOKEN` | `_csrf_token` value — sent as `x-csrftoken` on writes |
-| `TICKTICK_USER_ID` | `ap_user_id` value |
-| `TICKTICK_SITE` | `ticktick` (default) or `dida365` |
-| `TICKTICK_MCP_HOME` | Runtime dir, default `~/.ticktick-mcp` |
+### Web session cookie (full feature set)
 
-Writes require the CSRF token; without it the API answers 403. A `401
-user_not_sign_on` means the session expired — grab a fresh cookie.
+Grab it from a logged-in browser — DevTools → Network → any `api.ticktick.com`
+request → Request Headers → `cookie` — and pass the whole value.
+
+```json
+{
+  "mcpServers": {
+    "ticktick": {
+      "command": "npx",
+      "args": ["-y", "@powercess/ticktick-mcp"],
+      "env": {
+        "TICKTICK_COOKIE": "t=<session cookie>; _csrf_token=<csrf>; ap_user_id=<id>"
+      }
+    }
+  }
+}
+```
+
+### Personal API token (no cookie, stable)
+
+Create one in the web app: **Settings → Account → API Token → Create**. Long-lived,
+no 2FA prompt, no browser required.
+
+```json
+{
+  "mcpServers": {
+    "ticktick": {
+      "command": "npx",
+      "args": ["-y", "@powercess/ticktick-mcp"],
+      "env": {
+        "TICKTICK_API_TOKEN": "tp_<your token>"
+      }
+    }
+  }
+}
+```
+
+Token mode covers projects, tasks (CRUD, complete, move, batch, completed,
+search), tags, columns, habits, focus, countdowns and project groups — about
+28 of the 36 tools. Web-only tools (sync_check, trash, templates, calendar,
+preferences, tag rename/merge/delete) return a clear error explaining that a
+cookie session is needed.
+
+See [docs/authentication.md](docs/authentication.md) for the full walkthrough,
+Dida365 setup and every supported input.
 
 ## Layout
 
