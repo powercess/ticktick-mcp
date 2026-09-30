@@ -1,6 +1,6 @@
 {
   "name": "@powercess/ticktick-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MCP server for TickTick (ticktick.com / dida365.com) built on the private web API — the same endpoints the web app calls, with cookie auth and full read/write task, project, tag, habit and calendar coverage.",
   "type": "module",
   "license": "MIT",
