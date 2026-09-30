@@ -27,13 +27,7 @@ tag rename/merge/delete) return a descriptive error.
 ## Option B: Web session cookie (full feature set)
 
 Grab it from a logged-in browser — DevTools → Network → any `api.ticktick.com`
-request → Request Headers → `cookie` — and pass the whole value.
-
-
-
-
-
-
+request → Request Headers → `cookie` — and pass the whole value:
 
    ```
    t=<session>; _csrf_token=<csrf>; ap_user_id=<accountId>; AWSALB=...; AWSALBCORS=...
