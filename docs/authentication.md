@@ -1,15 +1,39 @@
 # Authentication
 
-The private TickTick web API authenticates with the **browser session cookie**.
-There is no OAuth flow here — you copy the cookie out of a logged-in browser
-once, and refresh it when the session expires.
+Two credential types, auto-detected from shape — no mode flag needed:
 
-## Get the cookie
+| Credential | Env var | API surface | Tools |
+|---|---|---|---|
+| **Web session cookie** | `TICKTICK_COOKIE` | private `/api/v2` + `/api/v3` | all 36 |
+| **Personal API token** (`tp_…`) | `TICKTICK_API_TOKEN` | official `/open/v1` | ~28 (stable subset) |
 
-1. Open <https://ticktick.com/webapp/> and sign in.
-2. Open DevTools → **Network**, and filter for `api.ticktick.com`.
-3. Click any request (e.g. `user/status`), find **Request Headers → `cookie`**.
-4. Copy the whole value. It looks like:
+## Option A: Personal API token (recommended)
+
+Create once, long-lived, no browser session to expire:
+
+1. Open <https://ticktick.com/webapp/> → avatar → **Settings → Account → API Token**.
+2. Click **Create**, copy the `tp_…` value.
+
+```bash
+export TICKTICK_API_TOKEN='tp_<your token>'
+```
+
+This authenticates against the official `/open/v1` surface with
+`Authorization: Bearer`. Covers projects, tasks (CRUD, complete, move, batch,
+completed, search), tags, columns, habits, focus, countdowns and project
+groups. Web-only tools (sync_check, trash, templates, calendar, preferences,
+tag rename/merge/delete) return a descriptive error.
+
+## Option B: Web session cookie (full feature set)
+
+Grab it from a logged-in browser — DevTools → Network → any `api.ticktick.com`
+request → Request Headers → `cookie` — and pass the whole value.
+
+
+
+
+
+
 
    ```
    t=<session>; _csrf_token=<csrf>; ap_user_id=<accountId>; AWSALB=...; AWSALBCORS=...
