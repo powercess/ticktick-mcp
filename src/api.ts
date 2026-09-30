@@ -259,8 +259,16 @@ export function searchAll(query: string, options: RequestOptions = {}) {
   return http.get<unknown>("/api/v2/search/all", { ...options, query: { query } });
 }
 
-export function getUserProfile(options: RequestOptions = {}) {
-  return http.get<unknown>("/api/v2/user/profile", options);
+/**
+ * `/user/profile` carries the display fields but **no** user id — that lives on
+ * `/user/status`. Merge both so callers get one object with `userId`/`inboxId`.
+ */
+export async function getUserProfile(options: RequestOptions = {}) {
+  const [profile, status] = await Promise.all([
+    http.get<Record<string, unknown>>("/api/v2/user/profile", options),
+    currentUser(options),
+  ]);
+  return { ...profile, userId: status.userId, inboxId: status.inboxId };
 }
 
 export function getPreferencesExt(options: RequestOptions = {}) {
