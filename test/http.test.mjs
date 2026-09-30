@@ -1,4 +1,5 @@
-import { test, expect } from "bun:test";
+import test from "node:test";
+import assert from "node:assert/strict";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -8,16 +9,16 @@ delete process.env.TICKTICK_COOKIE;
 delete process.env.TICKTICK_TOKEN;
 delete process.env.TICKTICK_API_TOKEN;
 
-import { http } from "../src/client.ts";
-import { TickTickError } from "../src/errors.ts";
+import { http } from "../dist/client.js";
+import { TickTickError } from "../dist/errors.js";
 
 test("a missing cookie fails before any network call", async () => {
-  await expect(http.get("/api/v2/projects")).rejects.toThrow(/No TickTick credentials/);
+  await assert.rejects(() => http.get("/api/v2/projects"), /No TickTick credentials/);
 });
 
 test("TickTickError carries status and code", () => {
   const error = new TickTickError("boom", 403, "access_forbidden", "{}");
-  expect(error.status).toBe(403);
-  expect(error.code).toBe("access_forbidden");
-  expect(error.name).toBe("TickTickError");
+  assert.equal(error.status, 403);
+  assert.equal(error.code, "access_forbidden");
+  assert.equal(error.name, "TickTickError");
 });

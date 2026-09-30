@@ -39,11 +39,10 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "pretest": "bun run build",
+    "pretest": "tsc",
     "start": "node dist/index.js",
-    "start:bun": "bun src/index.ts",
     "dev": "tsc -w",
-    "test": "bun test"
+    "test": "node --test \"test/**/*.test.mjs\""
   },
   "engines": {
     "node": ">=20"
